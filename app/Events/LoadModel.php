@@ -8,9 +8,10 @@ use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Queue\SerializesModels;
 
-class LoadModel
+class LoadModel implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -19,18 +20,38 @@ class LoadModel
      *
      * @return void
      */
-    public function __construct()
+    public $location;
+
+    public function __construct(String $location)
     {
-        //
+        $this->location = $location;
     }
 
+    public function broadcastOn()
+    {
+        return new Channel('location');
+    }
     /**
      * Get the channels the event should broadcast on.
      *
      * @return \Illuminate\Broadcasting\Channel|array
      */
-    public function broadcastOn()
+    public function broadcastWhen()
     {
-        return new PrivateChannel('channel-name');
+        return config('broadcasting.connections.pusher.app_id')
+            && config('broadcasting.connections.pusher.key')
+            && config('broadcasting.connections.pusher.secret');
+    }
+
+    /**
+     * Get the data to broadcast.
+     *
+     * @return array
+     */
+    public function broadcastWith()
+    {
+        return [
+            'location' => $this->location
+        ];
     }
 }
